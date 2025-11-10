@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
-import { apiGet } from '../lib/api'
+import { API_ERROR_MESSAGE, fetchJson } from '../lib/api.ts'
 
 const SERIES_CONFIG = [
   { key: 'aaa', label: 'Aaa', color: '#0f766e' },
@@ -64,7 +64,7 @@ export default function SpreadRatingChart() {
         const params = new URLSearchParams()
         params.set('start_date', DEFAULT_START_DATE)
         const queryString = params.toString()
-        const res = await apiGet(`/rating/?${queryString}`, { cacheKey: `rating:${queryString}` })
+        const res = await fetchJson(`rating/?${queryString}`)
         if (cancelled) return
         const array = Array.isArray(res) ? res : []
         const parsed = array
@@ -89,8 +89,9 @@ export default function SpreadRatingChart() {
           .sort((a, b) => a.timestamp - b.timestamp)
         setRows(parsed)
       } catch (e) {
+        console.error('Error loading spread rating data', e)
         if (!cancelled) {
-          setError(e.message || 'Error al cargar datos')
+          setError(API_ERROR_MESSAGE)
         }
       } finally {
         if (!cancelled) {

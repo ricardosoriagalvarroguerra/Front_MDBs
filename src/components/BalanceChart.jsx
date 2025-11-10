@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
-import { apiGet } from '../lib/api'
+import { Api, API_ERROR_MESSAGE } from '../lib/api.ts'
 import { colorForMdbCode } from '../lib/colors'
 
 function useResizeObserver(targetRef) {
@@ -102,14 +102,9 @@ export default function BalanceChart() {
           return
         }
 
-        const params = new URLSearchParams()
-        params.append('metric_id', metricId)
-        params.set('year_from', String(DEFAULT_YEAR_FROM))
-        const queryString = params.toString()
-
         const [valuesRes, mdbsRes] = await Promise.all([
-          apiGet(`/metric-values/?${queryString}`, { cacheKey: `metric-values:${queryString}` }),
-          apiGet('/mdbs/', { cacheTtlMs: 10 * 60 * 1000 }),
+          Api.metricValues(metricId, DEFAULT_YEAR_FROM),
+          Api.mdbs(),
         ])
         if (!cancelled) {
           setData(Array.isArray(valuesRes) ? valuesRes : [])
@@ -118,7 +113,8 @@ export default function BalanceChart() {
           setMdbList(Array.isArray(mdbsRes) ? mdbsRes : [])
         }
       } catch (e) {
-        if (!cancelled) setError(e.message || 'Error al cargar datos')
+        console.error('Error loading balance chart data', e)
+        if (!cancelled) setError(API_ERROR_MESSAGE)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -134,7 +130,7 @@ export default function BalanceChart() {
     let cancelled = false
     async function loadMeta() {
       try {
-        const metricsRes = await apiGet('/metrics/', { cacheTtlMs: 10 * 60 * 1000 })
+        const metricsRes = await Api.metrics()
         if (!cancelled) {
           const map = new Map((Array.isArray(metricsRes) ? metricsRes : []).map((m) => [m.metric_id, m]))
           setMetricMetaById(map)

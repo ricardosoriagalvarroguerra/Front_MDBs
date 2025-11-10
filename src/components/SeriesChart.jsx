@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import * as d3 from 'd3'
-import { apiGet } from '../lib/api'
+import { Api, API_ERROR_MESSAGE, fetchJson } from '../lib/api.ts'
 import { colorForMdbCode } from '../lib/colors'
 
 function useResizeObserver(targetRef) {
@@ -169,8 +169,8 @@ const removeSeries = useCallback((seriesKey) => {
         const queryString = params.toString()
 
         const [valuesRes, mdbsRes] = await Promise.all([
-          apiGet(`${endpointPath}?${queryString}`, { cacheKey: `${endpointPath}:${queryString}` }),
-          apiGet('/mdbs/', { cacheTtlMs: 10 * 60 * 1000 }),
+          fetchJson(`${endpointPath}?${queryString}`),
+          Api.mdbs(),
         ])
         if (!cancelled) {
           setData(Array.isArray(valuesRes) ? valuesRes : [])
@@ -179,7 +179,8 @@ const removeSeries = useCallback((seriesKey) => {
           setMdbList(Array.isArray(mdbsRes) ? mdbsRes : [])
         }
       } catch (e) {
-        if (!cancelled) setError(e.message || 'Error al cargar datos')
+        console.error('Error loading series chart data', e)
+        if (!cancelled) setError(API_ERROR_MESSAGE)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -188,14 +189,14 @@ const removeSeries = useCallback((seriesKey) => {
     return () => {
       cancelled = true
     }
-  }, [metricIdsForAll, selectedChartType])
+  }, [endpointPath, metricIdsForAll, selectedChartType])
 
   // Cargar metadatos de métricas (incluye fuente)
   useEffect(() => {
     let cancelled = false
     async function loadMeta() {
       try {
-        const metricsRes = await apiGet('/metrics/', { cacheTtlMs: 10 * 60 * 1000 })
+        const metricsRes = await Api.metrics()
         if (!cancelled) {
           const map = new Map((Array.isArray(metricsRes) ? metricsRes : []).map((m) => [m.metric_id, m]))
           setMetricMetaById(map)
