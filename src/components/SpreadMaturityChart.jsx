@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
-import { apiGet } from '../lib/api'
+import { API_ERROR_MESSAGE, fetchJson } from '../lib/api.ts'
 
 const SERIES_CONFIG = [
   { key: 'year_1', label: '1 Year', color: '#0f766e' },
@@ -63,7 +63,7 @@ export default function SpreadMaturityChart() {
         const params = new URLSearchParams()
         params.set('start_date', DEFAULT_START_DATE)
         const queryString = params.toString()
-        const res = await apiGet(`/maturity/?${queryString}`, { cacheKey: `maturity:${queryString}` })
+        const res = await fetchJson(`maturity/?${queryString}`)
         if (cancelled) return
         const array = Array.isArray(res) ? res : []
         const parsed = array
@@ -88,8 +88,9 @@ export default function SpreadMaturityChart() {
           .sort((a, b) => a.timestamp - b.timestamp)
         setRows(parsed)
       } catch (e) {
+        console.error('Error loading spread maturity data', e)
         if (!cancelled) {
-          setError(e.message || 'Error al cargar datos')
+          setError(API_ERROR_MESSAGE)
         }
       } finally {
         if (!cancelled) {

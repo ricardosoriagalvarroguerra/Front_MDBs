@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
-import { apiGet } from '../lib/api'
+import { Api, API_ERROR_MESSAGE, fetchJson } from '../lib/api.ts'
 import { colorForMdbCode } from '../lib/colors'
 
 const METRIC_CONFIG = [
@@ -97,9 +97,9 @@ export default function MarketSignalChart({ onSelectedMdbChange }) {
         const queryString = params.toString()
 
         const [valuesRes, mdbsRes, metricsRes] = await Promise.all([
-          apiGet(`/moodys-ratings-daily/?${queryString}`, { cacheKey: `moodys-ratings:${queryString}` }),
-          apiGet('/mdbs/', { cacheTtlMs: 10 * 60 * 1000 }),
-          apiGet('/metrics/', { cacheTtlMs: 10 * 60 * 1000 }),
+          fetchJson(`moodys-ratings-daily/?${queryString}`),
+          Api.mdbs(),
+          Api.metrics(),
         ])
         if (cancelled) return
 
@@ -195,8 +195,9 @@ export default function MarketSignalChart({ onSelectedMdbChange }) {
           setSelectedMdbId(null)
         }
       } catch (e) {
+        console.error('Error loading market signal data', e)
         if (!cancelled) {
-          setError(e.message || 'Error al cargar datos')
+          setError(API_ERROR_MESSAGE)
         }
       } finally {
         if (!cancelled) {
