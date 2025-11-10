@@ -1,4 +1,4 @@
-const RAW_API_BASE = (import.meta.env.VITE_API_BASE_URL || "").trim()
+const RAW_API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "/api").trim()
 const API_BASE = RAW_API_BASE.replace(/\/+$/, "")
 const ABSOLUTE_URL_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:/
 const PROTOCOL_RELATIVE_PATTERN = /^\/\//
