@@ -1,6 +1,7 @@
 const RAW_API_BASE = (import.meta.env.VITE_API_BASE_URL || "").trim()
 const API_BASE = RAW_API_BASE.replace(/\/+$/, "")
 const ABSOLUTE_URL_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:/
+const PROTOCOL_RELATIVE_PATTERN = /^\/\//
 
 export const API_ERROR_MESSAGE = 'No se pudo cargar datos por CORS/Red. Reintenta.'
 
@@ -21,11 +22,16 @@ export function apiUrl(path: string) {
   }
 
   if (API_BASE) {
-    if (ABSOLUTE_URL_PATTERN.test(API_BASE)) {
-      return new URL(normalizedPath, API_BASE + "/").toString()
+    if (ABSOLUTE_URL_PATTERN.test(API_BASE) || PROTOCOL_RELATIVE_PATTERN.test(API_BASE)) {
+      try {
+        return new URL(normalizedPath || ".", API_BASE.replace(/\/+$/, "") + "/").toString()
+      } catch (error) {
+        console.warn("Falling back to path join for API base", API_BASE, error)
+      }
     }
 
-    return joinWithSlash(API_BASE, normalizedPath)
+    const relativeBase = API_BASE.startsWith("/") ? API_BASE : `/${API_BASE}`
+    return joinWithSlash(relativeBase, normalizedPath)
   }
 
   if (!normalizedPath) {
