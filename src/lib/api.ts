@@ -1,7 +1,7 @@
 const DEFAULT_API_BASE =
   import.meta.env.DEV && typeof window !== "undefined" && window.location.hostname === "localhost"
     ? "/api"
-    : "https://backmbds-production.up.railway.app"
+    : "https://backmbds-production.up.railway.app/api"
 
 const RAW_API_BASE = (import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE).trim()
 const API_BASE = RAW_API_BASE.replace(/\/+$/, "")
